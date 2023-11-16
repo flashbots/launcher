@@ -1,8 +1,10 @@
+VERSION := $(shell git describe --tags --always --dirty="-dev")
+
 default: build
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build -o ./.bin/launcher github.com/flashbots/launcher/cmd
+	CGO_ENABLED=0 go build -ldflags "-X main.version=${VERSION}" -o ./bin/launcher github.com/flashbots/launcher/cmd
 
 .PHONY: snapshot
 snapshot:
