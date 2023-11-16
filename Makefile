@@ -1,4 +1,5 @@
 VERSION := $(shell git describe --tags --always --dirty="-dev")
+VERSION := $(VERSION:v%=%)
 
 default: build
 
