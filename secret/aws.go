@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -30,6 +31,16 @@ func AWS(ctx context.Context, arn string) (map[string]string, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(cfg.Region) == 0 {
+		// 0   1   2              3         4          5      6
+		// arn:aws:secretsmanager:${REGION}:${ACCOUNT}:secret:${SECRET}
+		parts := strings.Split(arn, ":")
+		if len(parts) != 7 {
+			return nil, fmt.Errorf("secret's ARN seems to be corrupt: %s", arn)
+		}
+		cfg.Region = parts[3]
 	}
 
 	cli := secretsmanager.NewFromConfig(cfg)
