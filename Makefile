@@ -2,7 +2,7 @@ default: build
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build -o ./bin/launcher github.com/flashbots/launcher/cmd
+	CGO_ENABLED=0 go build -o ./.bin/launcher github.com/flashbots/launcher/cmd
 
 .PHONY: snapshot
 snapshot:
