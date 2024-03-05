@@ -1,4 +1,4 @@
-VERSION := $(shell git describe --tags --always --dirty="-dev")
+VERSION := $(shell git describe --tags --always --dirty="-dev" --match "v*.*.*")
 VERSION := $(VERSION:v%=%)
 
 default: build

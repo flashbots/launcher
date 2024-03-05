@@ -3,6 +3,7 @@ package secret
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -13,11 +14,19 @@ import (
 )
 
 const (
-	timeout      = time.Second
+	timeout      = 5 * time.Second
 	versionStage = "AWSCURRENT"
 )
 
-func AWS(ctx context.Context, arn string) (map[string]string, error) {
+var (
+	ErrSecretEmpty             = errors.New("no secret or secret is empty")
+	ErrSecretFailedToUnmarshal = errors.New("failed to unmarshal the secret")
+	ErrSecretInvalidArn        = errors.New("secret's ARN seems to be corrupt")
+)
+
+func AWS(ctx context.Context, arn string) (
+	map[string]string, error,
+) {
 	if arn == "test" {
 		return map[string]string{
 			"_ANSWER":   "42",
@@ -38,7 +47,9 @@ func AWS(ctx context.Context, arn string) (map[string]string, error) {
 		// arn:aws:secretsmanager:${REGION}:${ACCOUNT}:secret:${SECRET}
 		parts := strings.Split(arn, ":")
 		if len(parts) != 7 {
-			return nil, fmt.Errorf("secret's ARN seems to be corrupt: %s", arn)
+			return nil, fmt.Errorf("%w: %s",
+				ErrSecretInvalidArn, arn,
+			)
 		}
 		cfg.Region = parts[3]
 	}
@@ -53,13 +64,15 @@ func AWS(ctx context.Context, arn string) (map[string]string, error) {
 		return nil, err
 	}
 	if res.SecretString == nil || len(*res.SecretString) == 0 {
-		return nil, fmt.Errorf("no secret or secret is empty")
+		return nil, ErrSecretEmpty
 	}
 
 	var secrets map[string]string
 	err = json.Unmarshal([]byte(*res.SecretString), &secrets)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal the secret '%s': %w", *res.SecretString, err)
+		return nil, fmt.Errorf("%w: %w: %s",
+			ErrSecretFailedToUnmarshal, err, *res.SecretString,
+		)
 	}
 
 	return secrets, nil
