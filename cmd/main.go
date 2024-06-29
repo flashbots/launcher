@@ -36,6 +36,13 @@ func main() {
 				Usage:    "read values from AWS secret manager (`ARN`) and inject them into the environment",
 			},
 
+			&cli.StringSliceFlag{
+				Category: "Running:",
+				EnvVars:  []string{flags.Env(flags.AzureKeyVaultName)},
+				Name:     flags.AzureKeyVaultName,
+				Usage:    "read secrets from Azure key vault and inject them into the environment",
+			},
+
 			&cli.IntFlag{
 				Category:    "Running:",
 				DefaultText: "don't change",

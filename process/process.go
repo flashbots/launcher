@@ -35,22 +35,22 @@ func New(c *cli.Context) (*Process, error) {
 	l := logutils.LoggerFromContext(ctx)
 	defer l.Sync() //nolint:errcheck
 
-	// fetch secrets
-
 	secrets := make(map[string]string)
+
+	// fetch secrets from aws
 	for _, arn := range c.StringSlice(flags.AwsSecretArn) {
 		start := time.Now()
 		moreSecrets, err := secret.AWS(ctx, arn)
 		if err != nil {
-			l.Error("Failed to fetch AWS secret",
+			l.Error("Failed to fetch AWS secrets",
 				zap.Error(err),
 				zap.String("arn", arn),
 			)
 			return nil, err
 		}
-		l.Debug("Fetched AWS secret",
+		l.Debug("Fetched AWS secrets",
 			zap.String("arn", arn),
-			zap.Duration("duration-ms", time.Duration(time.Now().Sub(start).Milliseconds())),
+			zap.Int64("duration-ms", time.Since(start).Milliseconds()),
 		)
 		for k, v := range moreSecrets {
 			if _, collision := secrets[k]; collision {
@@ -61,6 +61,32 @@ func New(c *cli.Context) (*Process, error) {
 			secrets[k] = v
 		}
 	}
+
+	// fetch secrets from azure
+	for _, vault := range c.StringSlice(flags.AzureKeyVaultName) {
+		start := time.Now()
+		moreSecrets, err := secret.Azure(ctx, vault)
+		if err != nil {
+			l.Error("Failed to fetch Azure key vault secrets",
+				zap.Error(err),
+				zap.String("vault", vault),
+			)
+			return nil, err
+		}
+		l.Debug("Fetched Azure key vault secrets",
+			zap.String("vault", vault),
+			zap.Int64("duration-ms", time.Since(start).Milliseconds()),
+		)
+		for k, v := range moreSecrets {
+			if _, collision := secrets[k]; collision {
+				l.Warn("Secrets key collision detected",
+					zap.String("key", k),
+				)
+			}
+			secrets[k] = v
+		}
+	}
+
 	p.secrets = secrets
 
 	// figure out ulimit

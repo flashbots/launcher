@@ -2,7 +2,11 @@
 
 Prepare the environment for a sub-process and launch it:
 
-- Read secrets from AWS secret manager and inject them into the environment.
+- Inject the secrets from:
+
+  - AWS secret manager
+  - Azure key vault
+
 - Set max open file limit.
 
 ## TL;DR

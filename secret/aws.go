@@ -19,9 +19,9 @@ const (
 )
 
 var (
-	ErrSecretEmpty             = errors.New("no secret or secret is empty")
-	ErrSecretFailedToUnmarshal = errors.New("failed to unmarshal the secret")
-	ErrSecretInvalidArn        = errors.New("secret's ARN seems to be corrupt")
+	errAwsSecretEmpty             = errors.New("aws: no secret or secret is empty")
+	errAwsSecretFailedToUnmarshal = errors.New("aws: failed to unmarshal the secret")
+	errAwsSecretInvalidArn        = errors.New("aws: secret's ARN seems to be corrupt")
 )
 
 func AWS(ctx context.Context, arn string) (
@@ -48,7 +48,7 @@ func AWS(ctx context.Context, arn string) (
 		parts := strings.Split(arn, ":")
 		if len(parts) != 7 {
 			return nil, fmt.Errorf("%w: %s",
-				ErrSecretInvalidArn, arn,
+				errAwsSecretInvalidArn, arn,
 			)
 		}
 		cfg.Region = parts[3]
@@ -64,14 +64,14 @@ func AWS(ctx context.Context, arn string) (
 		return nil, err
 	}
 	if res.SecretString == nil || len(*res.SecretString) == 0 {
-		return nil, ErrSecretEmpty
+		return nil, errAwsSecretEmpty
 	}
 
 	var secrets map[string]string
 	err = json.Unmarshal([]byte(*res.SecretString), &secrets)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w: %s",
-			ErrSecretFailedToUnmarshal, err, *res.SecretString,
+			errAwsSecretFailedToUnmarshal, err, *res.SecretString,
 		)
 	}
 
