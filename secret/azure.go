@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
@@ -41,6 +42,14 @@ func Azure(ctx context.Context, vaultName string) (
 			return nil, err
 		}
 		for _, properties := range page.SecretPropertiesListResult.Value {
+			if properties.Attributes != nil {
+				if properties.Attributes.Enabled != nil && !*properties.Attributes.Enabled {
+					continue
+				}
+				if properties.Attributes.Expires != nil && properties.Attributes.Expires.After(time.Now()) {
+					continue
+				}
+			}
 			if properties.ID == nil {
 				return nil, fmt.Errorf("%w: %s",
 					errAzurePropertyIdIsNil, vaultName,
